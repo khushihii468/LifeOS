@@ -2,13 +2,13 @@ import React from 'react';
 import { useAppState } from '../context/StateContext';
 import {
   TrendingUp,
-  Award,
   Flame,
   CheckCircle,
   Lightbulb,
-  Sparkles,
-  Percent,
   Compass,
+  Heart,
+  Activity,
+  Zap,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -17,12 +17,10 @@ import {
   XAxis,
   YAxis,
   Tooltip,
-  PieChart,
-  Pie,
-  Cell,
   BarChart,
   Bar,
   Legend,
+  CartesianGrid,
 } from 'recharts';
 
 export default function Analytics() {
@@ -32,7 +30,6 @@ export default function Analytics() {
   const completedGoalsCount = goals.filter((g) => g.status === 'Completed').length;
   const goalCompletionRate = totalGoalsCount > 0 ? Math.round((completedGoalsCount / totalGoalsCount) * 100) : 100;
 
-  // Let's count some actual stats for our dynamic insight rules
   const completedTasksCount = projects.reduce(
     (sum, p) => sum + p.tasks.filter((t) => t.status === 'Completed').length,
     0
@@ -45,20 +42,13 @@ export default function Analytics() {
     const habitsCount = habits.filter((h) => h.category === cat).length;
     return {
       name: cat,
-      Goals: goalsCount,
-      Habits: habitsCount,
+      Objectives: goalsCount,
+      Routines: habitsCount,
       Total: goalsCount + habitsCount,
     };
   });
 
-  // Score Weight Elements (Pie Chart Data)
-  const pieData = [
-    { name: 'Habits Consistency (40%)', value: Math.round(productivityScore.habitConsistency * 0.4), color: '#14b8a6' },
-    { name: 'Goals Progress (30%)', value: Math.round(productivityScore.goalProgress * 0.3), color: '#3b82f6' },
-    { name: 'Projects Completion (30%)', value: Math.round(productivityScore.projectCompletion * 0.3), color: '#6366f1' },
-  ];
-
-  // Monthly trends mock tracker
+  // Monthly trends status
   const monthlyTrends = [
     { month: 'Jan', Score: 55, Habits: 62 },
     { month: 'Feb', Score: 68, Habits: 70 },
@@ -68,58 +58,54 @@ export default function Analytics() {
     { month: 'Jun', Score: productivityScore.overallScore ?? 80, Habits: productivityScore.habitConsistency ?? 85 },
   ];
 
-  // Rule-Based dynamic insight algorithm as requested in Module 5
+  // Rule-Based elegant recommendations list
   const generateDynamicInsights = () => {
     const insights = [];
 
-    // Rule 1: Habit Consistency Insight
     if (productivityScore.habitConsistency >= 80) {
       insights.push({
         type: 'success',
-        text: 'Your habit consistency is exceptionally strong (above 80% this week). You are maintaining your meditation and coding routines beautifully!',
+        text: 'Your daily routine execution is exceptionally stable (above 80% this week). Line logs show ideal consistency indicators!',
       });
     } else if (productivityScore.habitConsistency < 60) {
       insights.push({
         type: 'warning',
-        text: 'Your habit completion rate has dropped below 60%. We recommend carving out dedicated ten-minute windows in the morning to restore your streaks.',
+        text: 'Habit execution rate has slipped below 60%. Try scheduling slots to restore calm consistency levels.',
       });
     } else {
       insights.push({
         type: 'info',
-        text: 'Refining habit consistency: Your habit completion increased by 12% compared to the previous week.',
+        text: 'Self-improvement Maintenance: Your habit completion rate improved over the trailing 7 days.',
       });
     }
 
-    // Rule 2: Goals completion insight
     if (completedGoalsCount > 0) {
       insights.push({
         type: 'success',
-        text: `Goal momentum: You successfully completed ${completedGoalsCount} core alignments this term. Your Master Advanced TypeScript track is fully complete!`,
+        text: `Goal momentum established! You successfully mapped and completed ${completedGoalsCount} master objectives as completed this period.`,
       });
     } else {
       insights.push({
         type: 'info',
-        text: 'Focus on core alignments: You currently have active goals in pipeline. Break down major items into checklist milestones to start checking progress.',
+        text: 'Objective Calibration: Active goal alignments are in play. Try mapping a small milestone parameter to unlock progress.',
       });
     }
 
-    // Rule 3: Project task completeness insight
     if (completedTasksCount > 2) {
       insights.push({
         type: 'success',
-        text: `Excellent project sprint progress! You successfully completed ${completedTasksCount} deep work milestone tasks in your Kanban sprint directory.`,
+        text: `Velocity High: Completed ${completedTasksCount} cards from your active sprint boards. The task list is moving steadily!`,
       });
     } else {
       insights.push({
         type: 'info',
-        text: 'Project Velocity Tip: Try moving at least one task in your LifeOS Board to "In Progress" today to kickstart active tasks.',
+        text: 'Task Board Velocity: Try shifting at least one catalog card to "In Progress" today to increase completion rate.',
       });
     }
 
-    // Rule 4: Simple productivity day rule
     insights.push({
       type: 'info',
-      text: 'Productivity Peak: Data algorithms indicate you are most productive on Tuesdays and Thursdays between 9:00 AM and 11:30 AM.',
+      text: 'Diagnostics indicate your optimal productivity triggers on Tuesdays and Wednesdays between 09:00 and 11:30 AM.',
     });
 
     return insights;
@@ -128,164 +114,137 @@ export default function Analytics() {
   const activeInsights = generateDynamicInsights();
 
   return (
-    <div id="analytics_module_root" className="space-y-6 animate-fade-in">
+    <div id="analytics_health_dashboard" className="space-y-10 select-none animate-fade-in text-[#1D1D1F]">
       
-      {/* Header */}
-      <div>
-        <h2 className="text-2xl font-bold font-sans tracking-tight text-gray-900 dark:text-zinc-50">
-          Analytics & Insights
+      {/* 1. HEADER */}
+      <div className="border-b border-[#E5E1DA] pb-6">
+        <div className="flex items-center gap-2 text-[10px] text-[#5C7C5A] uppercase tracking-widest font-mono font-bold mb-1.5">
+          <TrendingUp size={12} />
+          <span>Section 05 — Progress Journal</span>
+        </div>
+        <h2 className="text-2xl md:text-3xl font-serif font-bold tracking-tight text-[#1D1D1F]">
+          Retrospective & KPI Logs
         </h2>
-        <p className="text-sm text-gray-400 dark:text-zinc-400">
-          Advanced mathematics calculations mapping habit retention, goal velocity, and objective milestones.
+        <p className="text-xs text-zinc-500 font-serif italic mt-1">
+          Historical calculations mapping habit retention, goal completion, and objective milestones in a beautiful tactile ledger format.
         </p>
       </div>
 
-      {/* THREE BENTO KPI SUMMARIES */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+      {/* 2. NUMERICAL INDICATOR BOXES */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 font-sans">
         
-        {/* Productivity Score custom dial wrapper */}
-        <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-805 p-6 rounded-2xl shadow-sm text-center flex flex-col justify-between">
-          <div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">General Productivity OS Rating</span>
-            <div className="relative w-28 h-28 mx-auto mt-4">
-              {/* Simple beautiful SVG concentric circle graph */}
-              <svg className="w-full h-full transform -rotate-90">
-                <circle cx="56" cy="56" r="48" stroke="#f1f5f9" strokeWidth="8" fill="transparent" className="dark:stroke-zinc-800" />
-                <circle
-                  cx="56"
-                  cy="56"
-                  r="48"
-                  stroke="url(#grad1)"
-                  strokeWidth="8"
-                  fill="transparent"
-                  strokeDasharray="301.6"
-                  strokeDashoffset={301.6 - (301.6 * productivityScore.overallScore) / 100}
-                  strokeLinecap="round"
-                  className="transition-all duration-1000"
-                />
-                <defs>
-                  <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#38bdf8" />
-                    <stop offset="100%" stopColor="#4f46e5" />
-                  </linearGradient>
-                </defs>
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-2xl font-bold text-gray-900 dark:text-zinc-50">{productivityScore.overallScore}%</span>
-                <span className="text-[9px] text-gray-400 font-mono">Productive</span>
-              </div>
+        {/* Core Heart Rate / Health index */}
+        <div className="bg-white border border-[#E5E1DA] p-5.5 rounded-xl flex flex-col justify-between">
+          <div className="flex items-start justify-between w-full">
+            <div className="space-y-1 text-left">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#5C7C5A] flex items-center gap-1.5 font-mono">
+                <Heart size={11} className="text-[#C47A5A] fill-[#C47A5A]/10" />
+                Routine consistency
+              </span>
+              <h3 className="text-4xl font-extrabold text-[#1D1D1F] font-mono tracking-tight mt-1">
+                {productivityScore.habitConsistency}%
+              </h3>
             </div>
+            <span className="text-[9px] font-mono border border-[#5C7C5A]/30 text-[#5C7C5A] bg-[#5C7C5A]/5 px-2 py-0.5 rounded font-semibold">
+              Steady
+            </span>
           </div>
-
-          <p className="text-[10px] text-gray-400 mt-4 leading-normal">
-            Calculated as: 40% habits consistency + 30% goal progress + 30% sprint completions.
-          </p>
-        </div>
-
-        {/* Goal velocity Summary */}
-        <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-805 p-6 rounded-2xl shadow-sm flex flex-col justify-between">
-          <div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 block mb-2">Goal Velocity Rating</span>
-            <div className="space-y-4">
-              <div>
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="font-medium text-gray-750 dark:text-zinc-300">Goal Completion Rate</span>
-                  <span className="font-mono font-bold text-sky-505">{goalCompletionRate}%</span>
-                </div>
-                <div className="w-full bg-gray-100 dark:bg-zinc-800 h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-sky-400 h-full" style={{ width: `${goalCompletionRate}%` }} />
-                </div>
-              </div>
-
-              <div>
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="font-medium text-gray-750 dark:text-zinc-300">Milestones Checklist Done</span>
-                  <span className="font-mono font-bold text-indigo-505">{productivityScore.goalProgress}%</span>
-                </div>
-                <div className="w-full bg-gray-100 dark:bg-zinc-800 h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-indigo-400 h-full" style={{ width: `${productivityScore.goalProgress}%` }} />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-sky-50/50 dark:bg-sky-950/20 p-2.5 rounded-xl border border-sky-100/50 dark:border-sky-900/40 text-[10px] text-sky-800 dark:text-sky-300 mt-4">
-            * Milestone marks automatically trigger aggregate goal updates.
+          <div className="mt-4 pt-3 border-t border-[#E5E1DA]/50 text-left text-[11px] text-zinc-500 font-serif italic">
+            Based on trailing 7-day logs of active habits.
           </div>
         </div>
 
-        {/* Sprint Task completeness Summary */}
-        <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-805 p-6 rounded-2xl shadow-sm flex flex-col justify-between">
-          <div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 block mb-2">Sprint Task Completeness</span>
-            <div className="space-y-4">
-              <div>
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="font-medium text-gray-750 dark:text-zinc-300">Kanban Board Complete</span>
-                  <span className="font-mono font-bold text-teal-505">{productivityScore.projectCompletion}%</span>
-                </div>
-                <div className="w-full bg-gray-100 dark:bg-zinc-800 h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-teal-500 h-full" style={{ width: `${productivityScore.projectCompletion}%` }} />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 text-center pt-2">
-                <div className="bg-gray-50/60 dark:bg-zinc-950 p-2 rounded-xl border border-gray-100 dark:border-zinc-800/80">
-                  <span className="text-[9px] text-gray-400 font-bold block uppercase">Sprint Tasks</span>
-                  <span className="text-sm font-bold text-gray-800 dark:text-zinc-100">{completedTasksCount} completed</span>
-                </div>
-                <div className="bg-gray-50/60 dark:bg-zinc-950 p-2 rounded-xl border border-gray-100 dark:border-zinc-800/80">
-                  <span className="text-[9px] text-gray-400 font-bold block uppercase">Habits Score</span>
-                  <span className="text-sm font-bold text-gray-800 dark:text-zinc-100">{productivityScore.habitConsistency}%</span>
-                </div>
-              </div>
+        {/* Goal completion velocity */}
+        <div className="bg-white border border-[#E5E1DA] p-5.5 rounded-xl flex flex-col justify-between">
+          <div className="flex items-start justify-between w-full">
+            <div className="space-y-1 text-left">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#5C7C5A] flex items-center gap-1.5 font-mono">
+                <Activity size={11} className="text-[#5C7C5A]" />
+                Objective Velocity
+              </span>
+              <h3 className="text-4xl font-extrabold text-[#1D1D1F] font-mono tracking-tight mt-1">
+                {productivityScore.goalProgress}%
+              </h3>
             </div>
+            <span className="text-[9px] font-mono border border-[#C47A5A]/30 text-[#C47A5A] bg-[#C47A5A]/5 px-2 py-0.5 rounded font-semibold">
+              {goalCompletionRate >= 70 ? 'Optimal' : 'Active'}
+            </span>
           </div>
+          <div className="mt-4 pt-3 border-t border-[#E5E1DA]/50 text-left text-[11px] text-zinc-500 font-serif italic">
+            Calculated across milestones of currently active goals.
+          </div>
+        </div>
 
-          <p className="text-[10px] text-gray-400 mt-4 text-center">
-            Log completions consistently to maximize stats.
-          </p>
+        {/* Projects checklist board completeness */}
+        <div className="bg-white border border-[#E5E1DA] p-5.5 rounded-xl flex flex-col justify-between">
+          <div className="flex items-start justify-between w-full">
+            <div className="space-y-1 text-left">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#5C7C5A] flex items-center gap-1.5 font-mono">
+                <Zap size={11} className="text-[#C47A5A]" />
+                Sprint completion
+              </span>
+              <h3 className="text-4xl font-extrabold text-[#1D1D1F] font-mono tracking-tight mt-1">
+                {productivityScore.projectCompletion}%
+              </h3>
+            </div>
+            <span className="text-[9px] font-mono border border-[#E5E1DA] text-zinc-650 bg-[#F7F5F2] px-2 py-0.5 rounded font-semibold">
+              {completedTasksCount} Done
+            </span>
+          </div>
+          <div className="mt-4 pt-3 border-t border-[#E5E1DA]/50 text-left text-[11px] text-zinc-500 font-serif italic">
+            Assesses completed sprint cards on your planner dashboard.
+          </div>
         </div>
 
       </div>
 
-      {/* CHARTS CONTAINER Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* 3. CHARTS CONTAINER */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         
-        {/* Line graph monthly trend progress */}
-        <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 p-5 rounded-2xl shadow-sm">
-          <h3 className="font-semibold text-gray-850 dark:text-zinc-200 flex items-center gap-2 mb-4 text-sm">
-            <TrendingUp size={16} className="text-indigo-500" />
-            Productivity Monthly Trend Analysis
-          </h3>
-          <div className="w-full h-56">
+        {/* Line Graph for monthly trends */}
+        <div className="bg-white border border-[#E5E1DA] p-5 rounded-xl space-y-4">
+          <div className="flex justify-between items-center pb-2 border-b border-[#E5E1DA]/60">
+            <h3 className="text-[11px] uppercase tracking-widest font-mono font-bold text-zinc-450 flex items-center gap-1.5">
+              <Activity size={12} className="text-[#C47A5A]" />
+              Month Trailing Continuity Trend
+            </h3>
+            <span className="text-[10px] text-zinc-400 font-mono">Index Score</span>
+          </div>
+
+          <div className="w-full h-52 font-mono text-[10px]">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={monthlyTrends} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
-                <XAxis dataKey="month" stroke="#94a3b8" fontSize={11} tickLine={false} />
-                <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} domain={[0, 100]} />
-                <Tooltip />
-                <Line type="monotone" dataKey="Score" stroke="#4f46e5" strokeWidth={3} name="Productivity OS" />
-                <Line type="monotone" dataKey="Habits" stroke="#10b981" strokeWidth={1.5} strokeDasharray="3 3" name="Retained Habits" />
+                <CartesianGrid strokeDasharray="2 2" stroke="#E5E1DA" />
+                <XAxis dataKey="month" stroke="#A8A29E" fontSize={10} tickLine={false} />
+                <YAxis stroke="#A8A29E" fontSize={10} tickLine={false} domain={[0, 100]} />
+                <Tooltip contentStyle={{ background: '#FFFFFF', border: '1px solid #E5E1DA', borderRadius: '4px', fontClassName: 'font-mono' }} />
+                <Line type="monotone" dataKey="Score" stroke="#5C7C5A" strokeWidth={2.5} name="Productivity Index" dot={{ stroke: '#5C7C5A', strokeWidth: 1.5, r: 3 }} activeDot={{ r: 5 }} />
+                <Line type="monotone" dataKey="Habits" stroke="#C47A5A" strokeWidth={1} strokeDasharray="3 3" name="Routines Complete" dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Categories Bar allocations chart */}
-        <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 p-5 rounded-2xl shadow-sm">
-          <h3 className="font-semibold text-gray-850 dark:text-zinc-200 flex items-center gap-2 mb-4 text-sm">
-            <Compass size={16} className="text-sky-500" />
-            Integrate Allocation by Category
-          </h3>
-          <div className="w-full h-56">
+        {/* Categories allocation chart */}
+        <div className="bg-white border border-[#E5E1DA] p-5 rounded-xl space-y-4">
+          <div className="flex justify-between items-center pb-2 border-b border-[#E5E1DA]/60">
+            <h3 className="text-[11px] uppercase tracking-widest font-mono font-bold text-zinc-450 flex items-center gap-1.5">
+              <Compass size={12} className="text-[#5C7C5A]" />
+              Category Allocations Weighted
+            </h3>
+            <span className="text-[10px] text-zinc-400 font-mono">Weight Allocation</span>
+          </div>
+
+          <div className="w-full h-52 font-mono text-[10px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={categoryAllocations} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
-                <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickLine={false} />
-                <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} allowDecimals={false} />
-                <Tooltip />
-                <Legend iconType="circle" wrapperStyle={{ fontSize: '11px' }} />
-                <Bar dataKey="Goals" fill="#3b82f6" radius={[3, 3, 0, 0]} />
-                <Bar dataKey="Habits" fill="#14b8a6" radius={[3, 3, 0, 0]} />
+                <CartesianGrid strokeDasharray="2 2" stroke="#E5E1DA" />
+                <XAxis dataKey="name" stroke="#A8A29E" fontSize={10} tickLine={false} />
+                <YAxis stroke="#A8A29E" fontSize={10} tickLine={false} allowDecimals={false} />
+                <Tooltip contentStyle={{ background: '#FFFFFF', border: '1px solid #E5E1DA', borderRadius: '4px' }} />
+                <Legend iconType="square" wrapperStyle={{ fontSize: '10px', paddingTop: '8px' }} />
+                <Bar dataKey="Objectives" fill="#5C7C5A" name="Roadmap Projects" radius={[2, 2, 0, 0]} />
+                <Bar dataKey="Routines" fill="#C47A5A" name="Routines Logged" radius={[2, 2, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -293,35 +252,33 @@ export default function Analytics() {
 
       </div>
 
-      {/* RULE-BASED INSIGHT CARDS (Module 5) */}
-      <div id="ai_insights_card" className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 p-6 rounded-2xl shadow-sm space-y-4">
-        <h3 className="font-semibold text-gray-850 dark:text-zinc-150 flex items-center gap-2 text-sm">
-          <Lightbulb size={16} className="text-amber-500 fill-amber-500/10" />
-          Rule-Based Productivity Advice Insights
-        </h3>
+      {/* 4. PAPER DIAGNOSTICS & SYSTEM RECOMMENDATIONS (Insights) */}
+      <div className="bg-[#F7F5F2] p-6 rounded-lg border border-[#E5E1DA] space-y-4">
+        <div className="text-left select-none pb-2 border-b border-[#E5E1DA]">
+          <h3 className="font-serif font-bold text-sm text-[#1D1D1F] flex items-center gap-1.5">
+            <Lightbulb size={13} className="text-[#C47A5A]" />
+            Planner Retrospective Insights
+          </h3>
+          <p className="text-[11px] text-zinc-550 leading-tight">
+            Historical analysis logs evaluated against simple checklists for daily improvement:
+          </p>
+        </div>
 
+        {/* Dynamic rule box list */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {activeInsights.map((ins, i) => (
+          {activeInsights.map((ins, idx) => (
             <div
-              key={i}
-              className={`p-4 rounded-xl border flex items-start gap-3 text-xs leading-relaxed ${
-                ins.type === 'success'
-                  ? 'bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-900/30 text-emerald-800 dark:text-emerald-400'
-                  : ins.type === 'warning'
-                  ? 'bg-rose-50/50 dark:bg-rose-950/20 border-rose-100 dark:border-rose-900/30 text-rose-800 dark:text-rose-400'
-                  : 'bg-blue-50/35 dark:bg-blue-950/10 border-blue-100/50 dark:border-blue-900/30 text-blue-800 dark:text-blue-400'
-              }`}
+              key={idx}
+              className={`p-3.5 rounded bg-white border border-[#E5E1DA] flex items-start gap-3 text-[11.5px] leading-relaxed`}
             >
-              <span className="mt-0.5">
+              <span className="mt-0.5 shrink-0">
                 {ins.type === 'success' ? (
-                  <CheckCircle size={15} />
-                ) : ins.type === 'warning' ? (
-                  <Percent size={15} />
+                  <CheckCircle size={13} className="text-[#5C7C5A]" />
                 ) : (
-                  <Sparkles size={15} />
+                  <Activity size={13} className="text-[#C47A5A]" />
                 )}
               </span>
-              <p>{ins.text}</p>
+              <p className="text-left text-zinc-700">{ins.text}</p>
             </div>
           ))}
         </div>

@@ -25,6 +25,7 @@ interface StateContextType {
   // Auth actions
   login: (email: string, name: string) => void;
   logout: () => void;
+  purgeAndLogout: () => void;
   updateUser: (profile: Partial<UserProfile>) => void;
   // Goal actions
   addGoal: (goal: Omit<Goal, 'id' | 'progress' | 'createdAt'>) => void;
@@ -236,27 +237,27 @@ const INITIAL_NOTIFICATIONS: Notification[] = [
 export const StateProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserProfile | null>(() => {
     const saved = localStorage.getItem('lifeos_user');
-    return saved ? JSON.parse(saved) : INITIAL_USER;
+    return saved && saved !== 'null' ? JSON.parse(saved) : null;
   });
 
   const [goals, setGoals] = useState<Goal[]>(() => {
     const saved = localStorage.getItem('lifeos_goals');
-    return saved ? JSON.parse(saved) : INITIAL_GOALS;
+    return saved && saved !== 'null' ? JSON.parse(saved) : [];
   });
 
   const [habits, setHabits] = useState<Habit[]>(() => {
     const saved = localStorage.getItem('lifeos_habits');
-    return saved ? JSON.parse(saved) : INITIAL_HABITS;
+    return saved && saved !== 'null' ? JSON.parse(saved) : [];
   });
 
   const [projects, setProjects] = useState<Project[]>(() => {
     const saved = localStorage.getItem('lifeos_projects');
-    return saved ? JSON.parse(saved) : INITIAL_PROJECTS;
+    return saved && saved !== 'null' ? JSON.parse(saved) : [];
   });
 
   const [notifications, setNotifications] = useState<Notification[]>(() => {
     const saved = localStorage.getItem('lifeos_notifications');
-    return saved ? JSON.parse(saved) : INITIAL_NOTIFICATIONS;
+    return saved && saved !== 'null' ? JSON.parse(saved) : [];
   });
 
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -308,12 +309,49 @@ export const StateProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       avatarUrl: `https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=256&auto=format&fit=crop`,
       bio: 'Ready to crush my personal targets and habits with LifeOS!',
     };
+
+    if (email.toLowerCase() === 'khushinayak96@gmail.com') {
+      const savedGoals = localStorage.getItem('lifeos_goals');
+      if (!savedGoals || JSON.parse(savedGoals).length === 0) {
+        setGoals(INITIAL_GOALS);
+        setHabits(INITIAL_HABITS);
+        setProjects(INITIAL_PROJECTS);
+        setNotifications(INITIAL_NOTIFICATIONS);
+      }
+    } else {
+      setGoals([]);
+      setHabits([]);
+      setProjects([]);
+      setNotifications([
+        {
+          id: `n-${Date.now()}`,
+          title: 'Welcome to LifeOS',
+          message: `Hello ${name}! Start establishing objectives, routines, and task lists on this clean board.`,
+          type: 'success',
+          read: false,
+          createdAt: new Date().toISOString(),
+        }
+      ]);
+    }
     setUser(updated);
-    addNotification('Logged In Successfully', `Welcome back, ${name}! Your workspace is fully synchronized.`, 'success');
   };
 
   const logout = () => {
     setUser(null);
+    setCurrentTab('dashboard');
+  };
+
+  const purgeAndLogout = () => {
+    localStorage.removeItem('lifeos_user');
+    localStorage.removeItem('lifeos_goals');
+    localStorage.removeItem('lifeos_habits');
+    localStorage.removeItem('lifeos_projects');
+    localStorage.removeItem('lifeos_notifications');
+    setUser(null);
+    setGoals([]);
+    setHabits([]);
+    setProjects([]);
+    setNotifications([]);
     setCurrentTab('dashboard');
   };
 
@@ -741,6 +779,7 @@ export const StateProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setCurrentTab,
         login,
         logout,
+        purgeAndLogout,
         updateUser,
         addGoal,
         updateGoal,

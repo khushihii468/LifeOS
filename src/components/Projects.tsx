@@ -1,504 +1,433 @@
 import React, { useState } from 'react';
 import { useAppState } from '../context/StateContext';
-import { Project, Task, ProjectStatus, Priority } from '../types';
+import { Project, Task, Priority, TaskStatus } from '../types';
 import {
   FolderKanban,
   Plus,
   Trash,
-  Calendar,
-  Layers,
-  ChevronRight,
-  Sparkles,
-  CheckSquare,
+  MoveRight,
+  Clock,
+  CheckCircle,
   AlertTriangle,
+  FolderPlus,
   X,
-  Edit2,
-  ChevronLeft,
+  MoreVertical,
+  Check,
   Briefcase,
+  Flag,
+  Leaf,
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 
 export default function Projects() {
   const {
     projects,
     addProject,
-    updateProject,
     deleteProject,
-    addTask,
-    updateTask,
-    deleteTask,
-    moveTask,
+    addProjectTask,
+    updateProjectTask,
+    deleteProjectTask,
   } = useAppState();
 
-  const [activeProjectId, setActiveProjectId] = useState<string>(
-    projects.length > 0 ? projects[0].id : ''
-  );
-
-  // Project Creater Drawer Toggle
+  const [activeBoardId, setActiveBoardId] = useState<string>('');
+  
+  // Board Creator Drawer state
   const [showProjectCreator, setShowProjectCreator] = useState(false);
-  const [projName, setProjName] = useState('');
-  const [projDesc, setProjDesc] = useState('');
-  const [projPriority, setProjPriority] = useState<Priority>('Medium');
-  const [projTarget, setProjTarget] = useState('');
+  const [pName, setPName] = useState('');
+  const [pDesc, setPDesc] = useState('');
+  const [pPriority, setPPriority] = useState<Priority>('Medium');
+  const [pDue, setPDue] = useState('');
 
-  // Task Creator Modal state
-  const [showTaskModal, setShowTaskModal] = useState(false);
-  const [taskColumn, setTaskColumn] = useState<ProjectStatus>('Backlog');
-  const [taskTitle, setTaskTitle] = useState('');
-  const [taskDesc, setTaskDesc] = useState('');
-  const [taskPriority, setTaskPriority] = useState<Priority>('High');
-  const [taskDue, setTaskDue] = useState('');
+  // Task Creator Drawer state
+  const [showTaskCreator, setShowTaskCreator] = useState(false);
+  const [tName, setTName] = useState('');
+  const [tDesc, setTDesc] = useState('');
+  const [tPriority, setTPriority] = useState<Priority>('Medium');
 
-  const activeProject = projects.find((p) => p.id === activeProjectId);
+  // If no board is active, auto-activate the first board
+  React.useEffect(() => {
+    if (projects.length > 0 && !activeBoardId) {
+      setActiveBoardId(projects[0].id);
+    }
+  }, [projects, activeBoardId]);
 
-  const handleCreateProject = (e: React.FormEvent) => {
+  const activeProject = projects.find((p) => p.id === activeBoardId);
+
+  const handleCreateProjectSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!projName.trim()) return;
+    if (!pName.trim()) return;
 
     addProject({
-      name: projName.trim(),
-      description: projDesc.trim(),
-      priority: projPriority,
-      status: 'In Progress',
-      dueDate: projTarget || new Date(Date.now() + 15 * 24 * 60 * 60 * 1050).toISOString().split('T')[0],
+      name: pName.trim(),
+      description: pDesc.trim(),
+      priority: pPriority,
+      dueDate: pDue || new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      tasks: [],
     });
 
-    setProjName('');
-    setProjDesc('');
-    setProjPriority('Medium');
-    setProjTarget('');
+    setPName('');
+    setPDesc('');
+    setPPriority('Medium');
+    setPDue('');
     setShowProjectCreator(false);
-    
-    // Auto shift active focus to the newly created project board
-    if (projects.length === 0) {
-      setTimeout(() => {
-        const latest = localStorage.getItem('lifeos_projects');
-        if (latest) {
-          const parsed = JSON.parse(latest);
-          if (parsed.length > 0) setActiveProjectId(parsed[0].id);
-        }
-      }, 50);
-    }
   };
 
   const handleCreateTaskSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!taskTitle.trim() || !activeProjectId) return;
+    if (!tName.trim() || !activeBoardId) return;
 
-    addTask(activeProjectId, {
-      title: taskTitle.trim(),
-      description: taskDesc.trim(),
-      status: taskColumn,
-      priority: taskPriority,
-      dueDate: taskDue || new Date(Date.now() + 7 * 24 * 60 * 60 * 1020).toISOString().split('T')[0],
+    addProjectTask(activeBoardId, {
+      title: tName.trim(),
+      description: tDesc.trim(),
+      priority: tPriority,
+      status: 'Todo',
     });
 
-    setTaskTitle('');
-    setTaskDesc('');
-    setTaskPriority('High');
-    setTaskDue('');
-    setShowTaskModal(false);
+    setTName('');
+    setTDesc('');
+    setTPriority('Medium');
+    setShowTaskCreator(false);
   };
 
-  // Drag and Drop Event Handlers
-  const handleDragStart = (e: React.DragEvent, taskId: string) => {
-    e.dataTransfer.setData('text/plain', taskId);
-    e.dataTransfer.effectAllowed = 'move';
+  const shiftTaskStatus = (taskId: string, currentStatus: TaskStatus) => {
+    if (!activeBoardId) return;
+    const nextStatus: TaskStatus = 
+      currentStatus === 'Todo' ? 'In Progress' :
+      currentStatus === 'In Progress' ? 'Completed' : 'Todo';
+    
+    updateProjectTask(activeBoardId, taskId, { status: nextStatus });
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-  };
-
-  const handleDrop = (e: React.DragEvent, targetStatus: ProjectStatus) => {
-    e.preventDefault();
-    const taskId = e.dataTransfer.getData('text/plain');
-    if (activeProjectId && taskId) {
-      moveTask(activeProjectId, taskId, targetStatus);
-    }
-  };
-
-  const columns: { label: string; status: ProjectStatus; color: string }[] = [
-    { label: 'Backlog', status: 'Backlog', color: 'border-t-zinc-400' },
-    { label: 'In Progress', status: 'In Progress', color: 'border-t-sky-400' },
-    { label: 'Review', status: 'Review', color: 'border-t-indigo-400' },
-    { label: 'Completed', status: 'Completed', color: 'border-t-emerald-400' },
+  const columns: { id: TaskStatus; label: string; stroke: string; bg: string }[] = [
+    { id: 'Todo', label: 'Todo catalog', stroke: 'border-zinc-300', bg: 'bg-zinc-50' },
+    { id: 'In Progress', label: 'Underway execution', stroke: 'border-[#C47A5A]/30', bg: 'bg-[#C47A5A]/3' },
+    { id: 'Completed', label: 'Ticked archive', stroke: 'border-[#5C7C5A]/30', bg: 'bg-[#5C7C5A]/3' },
   ];
 
   return (
-    <div id="projects_module_root" className="space-y-6">
+    <div id="projects_kanban_environment" className="space-y-8 text-[#1D1D1F] animate-fade-in select-none">
       
-      {/* Horizontal Tab Project Selector */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between py-1 gap-4">
+      {/* 1. HEADER */}
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between py-1 gap-4 pb-2 border-b border-[#E5E1DA]">
         <div>
-          <h2 className="text-2xl font-bold font-sans tracking-tight text-gray-900 dark:text-zinc-50 flex items-center gap-2">
-            Kanban Boards
+          <div className="flex items-center gap-2 text-[10px] text-[#5C7C5A] uppercase tracking-widest font-mono font-bold mb-1">
+            <Leaf size={12} />
+            <span>Section 04 — TASK BOARDS</span>
+          </div>
+          <h2 className="text-2xl md:text-3xl font-serif font-bold tracking-tight text-[#1D1D1F]">
+            Sprint Checklists
           </h2>
-          <p className="text-sm text-gray-500 dark:text-zinc-400">
-            Create high-level projects, break tasks into sprint columns, and swipe status parameters.
+          <p className="text-xs text-zinc-500 font-serif italic mt-1 font-sans">
+            Categorize focused sprint cards into Todo, Underway, and Completed columns. Log subtasks clearly.
           </p>
         </div>
-
-        <button
-          onClick={() => setShowProjectCreator(!showProjectCreator)}
-          className="bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-medium py-2 px-4 rounded-xl text-xs flex items-center gap-1.5 cursor-pointer max-w-max"
-        >
-          <FolderKanban size={14} />
-          Launch Project Board
-        </button>
+        
+        <div className="flex gap-2 self-start sm:self-auto">
+          <button
+            onClick={() => setShowProjectCreator(true)}
+            className="border border-[#E5E1DA] hover:bg-[#F7F5F2] text-[#1D1D1F] font-semibold py-1.5 px-3.5 rounded text-xs flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+          >
+            <FolderPlus size={13} className="text-[#5C7C5A]" />
+            New Folder board
+          </button>
+          
+          {activeProject && (
+            <button
+              onClick={() => setShowTaskCreator(true)}
+              className="bg-[#5C7C5A] hover:bg-[#5C7C5A]/90 text-white font-medium py-1.5 px-4 rounded text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-sm transition-colors"
+            >
+              <Plus size={13} />
+              Add Task card
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Project Creator Slide block */}
-      {showProjectCreator && (
-        <div className="bg-white dark:bg-zinc-900 border border-indigo-100 dark:border-zinc-850 p-5 rounded-2xl shadow-sm max-w-lg space-y-4">
-          <h3 className="font-bold text-gray-950 dark:text-zinc-50 text-xs flex items-center gap-1.5 uppercase tracking-wider">
-            <Sparkles size={14} className="text-amber-500" />
-            Initialize Project Theme
-          </h3>
-
-          <form onSubmit={handleCreateProject} className="space-y-3.5">
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block">Project Name</label>
-              <input
-                type="text"
-                placeholder="E.g. Workspace Figma Guidelines"
-                required
-                value={projName}
-                onChange={(e) => setProjName(e.target.value)}
-                className="w-full bg-gray-50 dark:bg-zinc-950 border border-gray-100 dark:border-zinc-800 rounded-xl p-2.5 text-xs text-gray-900 focus:outline-none"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block">Core objective</label>
-              <input
-                type="text"
-                placeholder="Briefly state target milestones for board"
-                value={projDesc}
-                onChange={(e) => setProjDesc(e.target.value)}
-                className="w-full bg-gray-50 dark:bg-zinc-950 border border-gray-100 dark:border-zinc-800 rounded-xl p-2.5 text-xs text-gray-900 focus:outline-none"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3.5">
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block">Priority Badge</label>
-                <select
-                  value={projPriority}
-                  onChange={(e) => setProjPriority(e.target.value as Priority)}
-                  className="w-full py-2.5 px-3 bg-gray-50 dark:bg-zinc-950 border border-gray-100 dark:border-zinc-800 rounded-xl text-xs"
-                >
-                  <option value="Low">Low Priority</option>
-                  <option value="Medium">Medium Priority</option>
-                  <option value="High">High Priority</option>
-                </select>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block">Due Date</label>
-                <input
-                  type="date"
-                  value={projTarget}
-                  onChange={(e) => setProjTarget(e.target.value)}
-                  className="w-full py-2.5 px-3 bg-gray-50 dark:bg-zinc-950 border border-gray-100 dark:border-zinc-800 rounded-xl text-xs"
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-2 text-xs font-semibold pt-1">
+      {/* 2. BOARDS SELECTION SHEETS (Muji Folder Indexes) */}
+      <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none border-b border-[#E5E1DA]/40 select-none">
+        {projects.length === 0 ? (
+          <span className="text-[11.5px] text-zinc-400 italic">No folder cards mapped. Set up a board folder card above.</span>
+        ) : (
+          projects.map((p) => {
+            const isSelected = p.id === activeBoardId;
+            const completedCount = p.tasks.filter((t) => t.status === 'Completed').length;
+            const totalCount = p.tasks.length;
+            return (
               <button
-                type="button"
-                onClick={() => setShowProjectCreator(false)}
-                className="px-4 py-2 border border-gray-100 rounded-xl text-gray-500 hover:bg-gray-50"
+                key={p.id}
+                onClick={() => setActiveBoardId(p.id)}
+                className={`px-4 py-2.5 rounded-t-lg border-t border-x cursor-pointer text-left transition-colors whitespace-nowrap shrink-0 flex items-center gap-4 ${
+                  isSelected
+                    ? 'bg-white border-[#E5E1DA] text-[#1D1D1F] font-bold z-10 -mb-2.5 pb-3'
+                    : 'bg-[#F7F5F2] border-transparent text-zinc-500 hover:text-[#1D1D1F] hover:bg-[#E5E1DA]/40'
+                }`}
               >
-                Cancel
+                <div className="overflow-hidden">
+                  <span className="text-xs block tracking-tight truncate max-w-[140px]">{p.name}</span>
+                  <span className="text-[9.5px] text-zinc-400 font-mono block mt-0.5 leading-none">
+                    {completedCount}/{totalCount} cards complete
+                  </span>
+                </div>
               </button>
-              <button
-                type="submit"
-                className="bg-indigo-600 text-white px-4 py-2 rounded-xl"
-              >
-                Establish Board
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
+            );
+          })
+        )}
+      </div>
 
-      {/* HORIZONTAL BOARD SWITCH SELECTORS */}
-      {projects.length > 0 && (
-        <div className="flex gap-2 pb-1 border-b border-gray-100 dark:border-zinc-800/80 overflow-x-auto">
-          {projects.map((p) => (
-            <button
-              key={p.id}
-              onClick={() => {
-                setActiveProjectId(p.id);
-              }}
-              className={`px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all border flex items-center gap-1.5 cursor-pointer ${
-                activeProjectId === p.id
-                  ? 'bg-gradient-to-r from-sky-400 to-indigo-500 border-transparent text-white shadow-sm font-bold'
-                  : 'bg-white dark:bg-zinc-900 border-gray-105 dark:border-zinc-800 hover:border-gray-200 text-gray-500 dark:text-zinc-400'
-              }`}
-            >
-              <Briefcase size={12} />
-              {p.name}
-              <span className={`text-[9px] px-1.5 py-0.2 rounded-full ${activeProjectId === p.id ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500 dark:bg-zinc-805'}`}>
-                {p.tasks.length}
+      {activeProject ? (
+        <div className="space-y-6 pt-2">
+          
+          {/* Active board metadata specs summary label */}
+          <div className="bg-[#F7F5F2] border border-[#E5E1DA] p-4.5 rounded-lg flex flex-col md:flex-row md:items-center justify-between gap-4 text-left">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-serif font-bold text-[#1D1D1F]">
+                  Folder specifications: {activeProject.name}
+                </span>
+                <span className="text-[9px] font-mono border border-[#C47A5A]/30 text-[#C47A5A] bg-[#C47A5A]/5 px-2 py-0.2 rounded font-bold uppercase tracking-wider">
+                  Impact: {activeProject.priority}
+                </span>
+              </div>
+              {activeProject.description && (
+                <p className="text-xs text-zinc-500 font-serif leading-snug">
+                  {activeProject.description}
+                </p>
+              )}
+            </div>
+
+            <div className="flex items-center gap-4 shrink-0 font-mono">
+              <span className="text-[11px] text-zinc-450 flex items-center gap-1">
+                <Clock size={11} className="text-[#5C7C5A]" />
+                Target date: {activeProject.dueDate}
               </span>
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* RENDER ACTIVE PROJECT BOARD */}
-      {!activeProject ? (
-        <div className="text-center py-12 bg-white dark:bg-zinc-900 border border-gray-101 dark:border-zinc-800 rounded-3xl p-6">
-          <FolderKanban size={36} className="text-gray-300 mx-auto mb-3" />
-          <h3 className="text-sm font-semibold text-gray-700 dark:text-zinc-350">No active boards</h3>
-          <p className="text-xs text-gray-450 mt-1 max-w-sm mx-auto">
-            Establish a collaborative project workspace using the drawer button above.
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-5">
-          {/* Active project card details */}
-          <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 p-5 rounded-2xl shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2 mb-1.5">
-                <span className="bg-sky-50 dark:bg-sky-950/20 text-sky-500 text-[10px] px-2 py-0.5 rounded border border-sky-100 dark:border-sky-900/40 font-bold">
-                  Active Sprint
-                </span>
-                <span className="text-gray-300">•</span>
-                <span className="text-[10px] text-gray-400 font-mono">End deadline: {activeProject.dueDate}</span>
-              </div>
-              <h3 className="font-bold text-gray-850 dark:text-zinc-150 text-base">{activeProject.name}</h3>
-              <p className="text-xs text-gray-400 mt-0.5 max-w-xl">{activeProject.description}</p>
-            </div>
-
-            {/* Overall completeness rating */}
-            <div className="flex items-center gap-6 self-start md:self-center">
-              <div className="text-center">
-                <span className="text-[9px] uppercase tracking-wider text-gray-400 block font-bold">All tasks completed</span>
-                <span className="text-lg font-bold text-gray-800 dark:text-zinc-200">
-                  {activeProject.tasks.filter((t) => t.status === 'Completed').length}/{activeProject.tasks.length}
-                </span>
-              </div>
-
+              
               <button
-                onClick={() => deleteProject(activeProject.id)}
-                className="p-2 border border-gray-100 dark:border-zinc-800 hover:text-rose-500 rounded-xl transition-colors hover:bg-rose-50/50"
-                title="Delete project board"
+                onClick={() => {
+                  deleteProject(activeProject.id);
+                  setActiveBoardId('');
+                }}
+                className="text-zinc-400 hover:text-rose-600 p-1.5 hover:bg-[#E5E1DA]/30 rounded transition-all text-xs flex items-center gap-1 font-sans font-bold"
+                title="Delete this entire folder"
               >
-                <Trash size={14} />
+                <Trash size={12} />
+                <span>Discard Board</span>
               </button>
             </div>
           </div>
 
-          {/* KANBAN BOARD WRAPPER */}
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 items-start">
+          {/* 3. MULTI-COLUMN STATIONERY TASKS GRID */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start text-left">
             {columns.map((col) => {
-              const taskList = activeProject.tasks.filter((t) => t.status === col.status);
+              const colTasks = activeProject.tasks.filter((t) => t.status === col.id);
               return (
-                <div
-                  key={col.status}
-                  onDragOver={handleDragOver}
-                  onDrop={(e) => handleDrop(e, col.status)}
-                  className={`bg-gray-50/65 dark:bg-zinc-950/30 border border-gray-100 dark:border-zinc-850 rounded-2xl p-4 space-y-3 border-t-2 ${col.color}`}
-                >
-                  {/* Column Header */}
-                  <div className="flex justify-between items-center pb-2 border-b border-gray-50 dark:border-zinc-855">
-                    <span className="font-semibold text-xs text-gray-800 dark:text-zinc-200">{col.label}</span>
-                    <span className="bg-gray-100 dark:bg-zinc-850 px-2 py-0.5 rounded text-[10px] font-mono text-gray-400 font-bold">
-                      {taskList.length}
+                <div key={col.id} className="space-y-3.5">
+                  
+                  {/* Column Label */}
+                  <div className={`p-2.5 rounded-lg border bg-white ${col.stroke} flex justify-between items-center select-none`}>
+                    <span className="text-[11px] font-bold uppercase tracking-widest text-[#1D1D1F] font-mono leading-none">
+                      {col.label}
+                    </span>
+                    <span className="text-[10px] font-mono font-bold bg-[#F7F5F2] border border-[#E5E1DA] px-2 py-0.2 rounded text-zinc-500">
+                      {colTasks.length}
                     </span>
                   </div>
 
-                  {/* Tasks List */}
-                  <div className="space-y-3 min-h-[180px]">
-                    {taskList.length === 0 ? (
-                      <div className="text-center py-8 text-[11px] text-gray-400 italic">
-                        Empty column. Drop task units.
+                  {/* Cards stack */}
+                  <div className="space-y-2.5">
+                    {colTasks.length === 0 ? (
+                      <div className="h-24 rounded-lg bg-[#F7F5F2]/45 border border-[#E5E1DA] border-dashed flex items-center justify-center text-zinc-400 text-[11px] italic font-serif select-none">
+                        Empty column ledger.
                       </div>
                     ) : (
-                      taskList.map((task) => (
+                      colTasks.map((task) => (
                         <div
                           key={task.id}
-                          draggable={true}
-                          onDragStart={(e) => handleDragStart(e, task.id)}
-                          className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 p-4 rounded-xl shadow-xs space-y-3 cursor-grab hover:shadow active:cursor-grabbing transition-shadow group"
+                          className="bg-white border border-[#E5E1DA] p-4 rounded-lg hover:border-[#5C7C5A] hover:bg-[#F7F5F2]/10 transition-all space-y-2.5 relative group"
                         >
-                          {/* Task Priority */}
-                          <div className="flex justify-between items-center">
-                            <span
-                              className={`text-[9px] px-1.5 py-0.2 rounded font-bold ${
-                                task.priority === 'High'
-                                  ? 'bg-rose-50 text-rose-600 dark:bg-rose-950/20 dark:text-rose-400'
-                                  : task.priority === 'Medium'
-                                  ? 'bg-amber-50 text-amber-600 dark:bg-amber-950/20'
-                                  : 'bg-emerald-55 text-emerald-600/80'
-                              }`}
-                            >
-                              {task.priority} Priority
+                          <div className="flex items-start justify-between gap-2 text-left">
+                            <span className="text-xs font-semibold leading-relaxed text-[#1D1D1F] block pr-1.5">
+                              {task.title}
                             </span>
                             
-                            {/* Option deletes */}
                             <button
-                              onClick={() => deleteTask(activeProject.id, task.id)}
-                              className="text-gray-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => deleteProjectTask(activeProject.id, task.id)}
+                              className="text-zinc-300 hover:text-rose-600 opacity-0 group-hover:opacity-100 transition-opacity p-0.5 shrink-0"
+                              title="Discard card"
                             >
                               <X size={11} />
                             </button>
                           </div>
 
-                          {/* Task Title / Details */}
-                          <div>
-                            <h4 className="text-xs font-semibold text-gray-800 dark:text-zinc-200 leading-snug">
-                              {task.title}
-                            </h4>
-                            {task.description && (
-                              <p className="text-[10px] text-gray-400 dark:text-zinc-500 mt-0.5 line-clamp-2">
-                                {task.description}
-                              </p>
-                            )}
-                          </div>
+                          {task.description && (
+                            <p className="text-[11px] text-zinc-500 leading-normal font-serif">
+                              {task.description}
+                            </p>
+                          )}
 
-                          {/* Task due and fallback swipe operations */}
-                          <div className="pt-2 border-t border-gray-50 dark:border-zinc-850/80 flex justify-between items-center text-[10px]">
-                            <span className="text-gray-400 flex items-center gap-1">
-                              <Calendar size={10} />
-                              {task.dueDate}
+                          {/* Controls bar */}
+                          <div className="pt-2 border-t border-[#E5E1DA]/50 flex items-center justify-between select-none">
+                            <span className="text-[9px] font-mono font-bold uppercase bg-[#F7F5F2] border border-[#E5E1DA]/75 text-zinc-500 px-1.5 py-0.2 rounded">
+                              {task.priority || 'Medium'}
                             </span>
 
-                            {/* Clicks fallback buttons to slide columns instantly */}
-                            <div className="flex gap-1">
-                              {col.status !== 'Backlog' && (
-                                <button
-                                  onClick={() => {
-                                    const sourceIdx = columns.findIndex((c) => c.status === col.status);
-                                    moveTask(activeProject.id, task.id, columns[sourceIdx - 1].status);
-                                  }}
-                                  className="p-0.5 bg-gray-100 hover:bg-gray-200 rounded text-gray-500 dark:bg-zinc-800"
-                                  title="Shift left"
-                                >
-                                  <ChevronLeft size={10} />
-                                </button>
-                              )}
-                              {col.status !== 'Completed' && (
-                                <button
-                                  onClick={() => {
-                                    const sourceIdx = columns.findIndex((c) => c.status === col.status);
-                                    moveTask(activeProject.id, task.id, columns[sourceIdx + 1].status);
-                                  }}
-                                  className="p-0.5 bg-gray-100 hover:bg-gray-200 rounded text-gray-500 dark:bg-zinc-800"
-                                  title="Shift right"
-                                >
-                                  <ChevronRight size={10} />
-                                </button>
-                              )}
-                            </div>
+                            <button
+                              onClick={() => shiftTaskStatus(task.id, task.status)}
+                              className="text-[9.5px] font-bold text-[#5C7C5A] hover:text-[#C47A5A] flex items-center gap-1 cursor-pointer transition-colors"
+                              title="Advance Status"
+                            >
+                              <span>Next status</span>
+                              <MoveRight size={10} />
+                            </button>
                           </div>
                         </div>
                       ))
                     )}
                   </div>
 
-                  {/* Add Task Trigger button */}
-                  <button
-                    onClick={() => {
-                      setTaskColumn(col.status);
-                      setShowTaskModal(true);
-                    }}
-                    className="w-full text-center py-1.5 border border-dashed border-gray-200 dark:border-zinc-800 hover:border-gray-300 rounded-xl text-[11px] text-gray-400 hover:text-gray-600 transition-colors flex items-center justify-center gap-0.5 cursor-pointer mt-2"
-                  >
-                    <Plus size={12} />
-                    Add Task Card
-                  </button>
                 </div>
               );
             })}
           </div>
+
+        </div>
+      ) : (
+        <div className="py-20 text-center text-zinc-400 font-serif italic text-xs">
+          Initial Board missing. Initialize your first notebook folder card using the "New Folder board" button above.
         </div>
       )}
 
-      {/* CREATE TASK INNER MODAL POPUP */}
-      {showTaskModal && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-zinc-900 border border-gray-100 rounded-2xl w-full max-w-md p-6 relative">
+      {/* 4. DRAWER CREATOR MODALS */}
+      {/* Board creator panel */}
+      {showProjectCreator && (
+        <div className="fixed inset-0 bg-[#343434]/25 z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-[#E5E1DA] p-6 rounded-xl shadow-lg w-full max-w-sm text-left relative text-[#1D1D1F]">
             <button
-              onClick={() => setShowTaskModal(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+              onClick={() => setShowProjectCreator(false)}
+              className="absolute top-4 right-4 text-zinc-450 hover:text-zinc-650"
             >
-              <X size={16} />
+              <X size={14} />
             </button>
 
-            <h3 className="font-bold text-sm text-gray-900 dark:text-zinc-50 flex items-center gap-1.5 mb-4">
-              <CheckSquare size={16} className="text-indigo-500" />
-              Establish Task Card • {taskColumn}
+            <h3 className="font-serif font-bold text-sm text-[#1D1D1F] uppercase tracking-widest pb-2 border-b border-[#E5E1DA]">
+              New folder Board card
+            </h3>
+
+            <form onSubmit={handleCreateProjectSubmit} className="space-y-4">
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-zinc-450 uppercase tracking-widest block">Folder Name</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Master thesis revision"
+                  required
+                  value={pName}
+                  onChange={(e) => setPName(e.target.value)}
+                  className="w-full px-3 py-2 bg-[#F7F5F2] border border-[#E5E1DA] rounded text-xs text-[#1D1D1F]"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-zinc-450 uppercase tracking-widest block font-sans">Objective details</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Logbooks for standard outline edits"
+                  value={pDesc}
+                  onChange={(e) => setPDesc(e.target.value)}
+                  className="w-full px-3 py-2 bg-[#F7F5F2] border border-[#E5E1DA] rounded text-xs text-[#1D1D1F]"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-zinc-450 uppercase tracking-widest block">Focus weight</label>
+                <select
+                  value={pPriority}
+                  onChange={(e) => setPPriority(e.target.value as Priority)}
+                  className="w-full bg-[#F7F5F2] border border-[#E5E1DA] rounded p-2 text-xs text-[#1D1D1F]"
+                >
+                  <option value="High">High weight</option>
+                  <option value="Medium">Medium weight</option>
+                  <option value="Low">Low weight</option>
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-zinc-450 uppercase tracking-widest block">Target Due</label>
+                <input
+                  type="date"
+                  value={pDue}
+                  onChange={(e) => setPDue(e.target.value)}
+                  className="w-full px-3 py-2 bg-[#F7F5F2] border border-[#E5E1DA] rounded text-xs text-[#1D1D1F]"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full mt-4 bg-[#5C7C5A] hover:bg-[#5C7C5A]/90 text-white font-medium py-2 px-4 rounded text-xs transition shadow-sm flex items-center justify-center gap-2"
+              >
+                Confirm Board Folder
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Task creator panel */}
+      {showTaskCreator && (
+        <div className="fixed inset-0 bg-[#343434]/25 z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-[#E5E1DA] p-6 rounded-xl shadow-lg w-full max-w-sm text-left relative text-[#1D1D1F]">
+            <button
+              onClick={() => setShowTaskCreator(false)}
+              className="absolute top-4 right-4 text-zinc-450 hover:text-zinc-650"
+            >
+              <X size={14} />
+            </button>
+
+            <h3 className="font-serif font-bold text-sm text-[#1D1D1F] uppercase tracking-widest pb-2 border-b border-[#E5E1DA]">
+              Add Sprint Task Card
             </h3>
 
             <form onSubmit={handleCreateTaskSubmit} className="space-y-4">
               <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider block">Task Title</label>
+                <label className="text-[10px] font-bold text-zinc-450 uppercase tracking-widest block font-sans">Task Name</label>
                 <input
                   type="text"
-                  placeholder="Review brand logo grid variants"
+                  placeholder="e.g. Write structural drafts"
                   required
-                  value={taskTitle}
-                  onChange={(e) => setTaskTitle(e.target.value)}
-                  className="w-full bg-gray-50 dark:bg-zinc-950 border border-gray-100 p-2 text-xs rounded-xl focus:outline-none focus:border-indigo-500"
+                  value={tName}
+                  onChange={(e) => setTName(e.target.value)}
+                  className="w-full px-3 py-2 bg-[#F7F5F2] border border-[#E5E1DA] rounded text-xs text-[#1D1D1F]"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider block">Task Objective / details</label>
+                <label className="text-[10px] font-bold text-zinc-450 uppercase tracking-widest block text-left">Card Description</label>
                 <textarea
-                  placeholder="What specifically needs to be completed for this task sprint?"
+                  placeholder="Log any required parameters..."
                   rows={2}
-                  value={taskDesc}
-                  onChange={(e) => setTaskDesc(e.target.value)}
-                  className="w-full bg-gray-50 dark:bg-zinc-950 border border-gray-100 p-2 text-xs rounded-xl focus:outline-none focus:border-indigo-500"
+                  value={tDesc}
+                  onChange={(e) => setTDesc(e.target.value)}
+                  className="w-full px-3 py-2 bg-[#F7F5F2] border border-[#E5E1DA] rounded text-xs text-[#1D1D1F]"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider block">Priority</label>
-                  <select
-                    value={taskPriority}
-                    onChange={(e) => setTaskPriority(e.target.value as Priority)}
-                    className="w-full py-2 px-3 bg-gray-50 dark:bg-zinc-950 border border-gray-100 rounded-xl text-xs"
-                  >
-                    <option value="Low">Low Priority</option>
-                    <option value="Medium">Medium Priority</option>
-                    <option value="High">High Priority</option>
-                  </select>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider block">Due Date</label>
-                  <input
-                    type="date"
-                    required
-                    value={taskDue}
-                    onChange={(e) => setTaskDue(e.target.value)}
-                    className="w-full py-2 px-3 bg-gray-50 dark:bg-zinc-950 border border-gray-100 rounded-xl text-xs"
-                  />
-                </div>
+              <div className="space-y-1 text-left">
+                <label className="text-[10px] font-bold text-zinc-450 uppercase tracking-widest block text-left">Task Priority</label>
+                <select
+                  value={tPriority}
+                  onChange={(e) => setTPriority(e.target.value as Priority)}
+                  className="w-full bg-[#F7F5F2] border border-[#E5E1DA] rounded p-2 text-xs text-[#1D1D1F]"
+                >
+                  <option value="High">High impact</option>
+                  <option value="Medium">Medium impact</option>
+                  <option value="Low">Low impact</option>
+                </select>
               </div>
 
-              <div className="pt-2 flex justify-end gap-2 text-xs font-semibold">
-                <button
-                  type="button"
-                  onClick={() => setShowTaskModal(false)}
-                  className="px-4 py-2 border rounded-xl text-gray-550 hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="bg-indigo-600 text-white px-4 py-2 rounded-xl"
-                >
-                  Publish Task
-                </button>
-              </div>
+              <button
+                type="submit"
+                className="w-full mt-4 bg-[#5C7C5A] hover:bg-[#5C7C5A]/90 text-white font-medium py-2 px-4 rounded text-xs transition shadow-sm flex items-center justify-center gap-2"
+              >
+                Add Sprint Card
+              </button>
             </form>
           </div>
         </div>

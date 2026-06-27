@@ -4,27 +4,25 @@ import { Habit, Category, Frequency } from '../types';
 import {
   Flame,
   Calendar,
-  Sparkles,
   BarChart,
-  Grid,
   Plus,
   Trash,
   Check,
   CheckCircle,
   HelpCircle,
   Info,
-  ChevronLeft,
-  ChevronRight,
+  Leaf,
+  X,
   TrendingUp,
 } from 'lucide-react';
-import {
-  ResponsiveContainer,
-  BarChart as RechartsBarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-} from 'recharts';
+import { motion, AnimatePresence } from 'motion/react';
+
+// Get past date strings
+const getPastDateStr = (daysAgo: number): string => {
+  const date = new Date();
+  date.setDate(date.getDate() - daysAgo);
+  return date.toISOString().split('T')[0];
+};
 
 export default function Habits() {
   const { habits, addHabit, deleteHabit, toggleHabitLog } = useAppState();
@@ -37,21 +35,6 @@ export default function Habits() {
   const [showCreator, setShowCreator] = useState(false);
 
   const todayStr = new Date().toISOString().split('T')[0];
-
-  // Helper: Get past date strings for heatmap (14 weeks = 98 days)
-  const totalHeatmapDays = 98;
-  const heatmapDates: string[] = [];
-  for (let i = totalHeatmapDays - 1; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    heatmapDates.push(d.toISOString().split('T')[0]);
-  }
-
-  // Group heatmapDates into weeks (7 days each) for columns
-  const heatmapWeeks: string[][] = [];
-  for (let i = 0; i < heatmapDates.length; i += 7) {
-    heatmapWeeks.push(heatmapDates.slice(i, i + 7));
-  }
 
   const handleCreateHabitSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,19 +56,14 @@ export default function Habits() {
     setShowCreator(false);
   };
 
-  // 1. Calculate general habit stats
   const longestStreak = habits.reduce((max, h) => Math.max(max, h.maxStreak), 0);
   const totalCurrentStreak = habits.reduce((max, h) => Math.max(max, h.streak), 0);
 
-  // Completion Percentage across previous week
+  // Completion calculation
   let overallCompletionPercentage = 0;
   if (habits.length > 0) {
     let checkedCount = 0;
-    const past7Days = Array.from({ length: 7 }, (_, i) => {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      return d.toISOString().split('T')[0];
-    });
+    const past7Days = Array.from({ length: 7 }, (_, i) => getPastDateStr(i));
 
     habits.forEach((h) => {
       past7Days.forEach((dateStr) => {
@@ -99,354 +77,287 @@ export default function Habits() {
     overallCompletionPercentage = Math.round((checkedCount / totalPossibleChecks) * 100);
   }
 
-  // Find most successful habit (highest current streak if any)
+  // Find most successful habit
   const mostSuccessfulHabit = habits.length > 0
     ? [...habits].sort((a, b) => b.streak - a.streak)[0]
     : null;
 
-  // Generate weekly completions summary chart data
-  const weeklyCompletionData = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() - (6 - i));
-    const dateStr = d.toISOString().split('T')[0];
-    const weekdayLabel = d.toLocaleDateString('en-US', { weekday: 'short' });
-
-    // count how many habits checked on this date
-    let loggedNum = 0;
-    habits.forEach((h) => {
-      if (h.logs.some((l) => l.date === dateStr)) {
-        loggedNum++;
-      }
-    });
-
-    return {
-      day: weekdayLabel,
-      completed: loggedNum,
-    };
+  // Past 7 days chronological list for our paper matrix index
+  const past7DaysChronological = Array.from({ length: 7 }, (_, i) => {
+    return getPastDateStr(6 - i);
   });
 
   return (
-    <div id="habits_module_root" className="space-y-6">
+    <div id="habits_fitness_hub" className="space-y-8 text-[#1D1D1F] animate-fade-in select-none">
       
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-1 gap-4">
+      {/* 1. HEADER */}
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between py-1 gap-4 pb-2 border-b border-[#E5E1DA]">
         <div>
-          <h2 className="text-2xl font-bold font-sans tracking-tight text-gray-900 dark:text-zinc-50">
+          <div className="flex items-center gap-2 text-[10px] text-[#5C7C5A] uppercase tracking-widest font-mono font-bold mb-1">
+            <Leaf size={12} />
+            <span>Section 03 — ROUTINES MATRIX</span>
+          </div>
+          <h2 className="text-2xl md:text-3xl font-serif font-bold tracking-tight text-[#1D1D1F]">
             Habit Consistency
           </h2>
-          <p className="text-sm text-gray-500 dark:text-zinc-400">
-            Build consistency through positive actions. Log daily marks to feed your streaks.
+          <p className="text-xs text-zinc-500 font-serif italic mt-1">
+            Establish healthy daily rituals and tick off sequential streaks on physical planner card grids.
           </p>
         </div>
         <button
           onClick={() => setShowCreator(!showCreator)}
-          className="bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white font-medium py-2 px-4 rounded-xl text-xs shadow-md shadow-indigo-100 dark:shadow-none hover:shadow-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer max-w-max self-start sm:self-center"
+          className="bg-[#5C7C5A] hover:bg-[#5C7C5A]/90 text-white font-medium py-1.5 px-4 rounded text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-sm transition-colors self-start sm:self-auto"
         >
-          <Plus size={15} />
+          <Plus size={13} />
           Track New Habit
         </button>
       </div>
 
-      {/* Creator Form block */}
-      {showCreator && (
-        <div className="bg-white dark:bg-zinc-900 border border-sky-100 dark:border-zinc-800 p-6 rounded-2xl shadow-md space-y-4 max-w-xl animate-fade-in">
-          <h3 className="font-bold text-gray-900 dark:text-zinc-50 text-sm flex items-center gap-1.5">
-            <Sparkles size={16} className="text-amber-500" />
-            Define Good Habit
-          </h3>
-
-          <form onSubmit={handleCreateHabitSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">Habit Name</label>
-                <input
-                  type="text"
-                  placeholder="LeetCode Daily Problem"
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full bg-gray-50 dark:bg-zinc-950 border border-gray-100 dark:border-zinc-800 rounded-xl p-2.5 text-xs text-gray-900 dark:text-zinc-50 focus:outline-none focus:border-sky-500"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">Description</label>
-                <input
-                  type="text"
-                  placeholder="15 minutes of algorithmic problem solving"
-                  value={desc}
-                  onChange={(e) => setDesc(e.target.value)}
-                  className="w-full bg-gray-50 dark:bg-zinc-950 border border-gray-100 dark:border-zinc-800 rounded-xl p-2.5 text-xs text-gray-900 dark:text-gray-150 focus:outline-none focus:border-sky-500"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="space-y-1">
-                <label className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 block">Frequency</label>
-                <select
-                  value={frequency}
-                  onChange={(e) => setFrequency(e.target.value as Frequency)}
-                  className="w-full py-2.5 px-3 bg-gray-50 dark:bg-zinc-950 border border-gray-100 dark:border-zinc-800 rounded-xl text-xs text-gray-700 dark:text-zinc-300"
-                >
-                  <option value="Daily">Daily</option>
-                  <option value="Weekly">Weekly</option>
-                </select>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 block">Category</label>
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value as Category)}
-                  className="w-full py-2.5 px-3 bg-gray-50 dark:bg-zinc-950 border border-gray-100 dark:border-zinc-800 rounded-xl text-xs text-gray-700 dark:text-zinc-300"
-                >
-                  <option value="Career">Career</option>
-                  <option value="Health">Health</option>
-                  <option value="Finance">Finance</option>
-                  <option value="Learning">Learning</option>
-                  <option value="Personal">Personal</option>
-                </select>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 block">Target Per Day</label>
-                <input
-                  type="number"
-                  min="1"
-                  max="10"
-                  value={targetPerDay}
-                  onChange={(e) => setTargetPerDay(Number(e.target.value))}
-                  className="w-full py-2.5 px-3 bg-gray-50 dark:bg-zinc-950 border border-gray-100 dark:border-zinc-800 rounded-xl text-xs text-gray-705"
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-2 pt-2 text-xs font-semibold">
+      {/* 2. CREATOR MODAL */}
+      <AnimatePresence>
+        {showCreator && (
+          <div className="fixed inset-0 bg-[#343434]/25 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ scale: 0.98, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.98, opacity: 0 }}
+              className="bg-white border border-[#E5E1DA] p-6 rounded-xl shadow-lg w-full max-w-md space-y-4 text-left relative text-[#1D1D1F]"
+            >
               <button
-                type="button"
                 onClick={() => setShowCreator(false)}
-                className="px-4 py-2 border border-gray-100 dark:border-zinc-850 rounded-xl text-gray-500 hover:bg-gray-50"
+                className="absolute top-4 right-4 text-zinc-450 hover:text-zinc-650"
               >
-                Cancel
+                <X size={14} />
               </button>
-              <button
-                type="submit"
-                className="bg-gradient-to-r from-sky-500 to-indigo-600 text-white px-4 py-2 rounded-xl shadow"
-              >
-                Track Habit
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
 
-      {/* Analytics top info grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <h3 className="font-serif font-bold text-sm text-[#1D1D1F] uppercase tracking-widest pb-2 border-b border-[#E5E1DA]">
+                Track New Routine
+              </h3>
+
+              <form onSubmit={handleCreateHabitSubmit} className="space-y-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-zinc-450 uppercase tracking-widest block">Routine Name</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Diaphragmatic Deep Breathing"
+                    required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="w-full px-3 py-2 bg-[#F7F5F2] border border-[#E5E1DA] rounded text-xs text-[#1D1D1F]"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-zinc-450 uppercase tracking-widest block">Intent & Details</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 5 minutes at sunrise for clarity"
+                    value={desc}
+                    onChange={(e) => setDesc(e.target.value)}
+                    className="w-full px-3 py-2 bg-[#F7F5F2] border border-[#E5E1DA] rounded text-xs text-[#1D1D1F]"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-zinc-450 uppercase tracking-widest block font-sans">Cadence</label>
+                    <select
+                      value={frequency}
+                      onChange={(e) => setFrequency(e.target.value as Frequency)}
+                      className="w-full bg-[#F7F5F2] border border-[#E5E1DA] rounded p-2 text-xs text-[#1D1D1F]"
+                    >
+                      <option value="Daily">Daily</option>
+                      <option value="Weekly">Weekly</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-zinc-450 uppercase tracking-widest block">Segment area</label>
+                    <select
+                      value={category}
+                      onChange={(e) => setCategory(e.target.value as Category)}
+                      className="w-full bg-[#F7F5F2] border border-[#E5E1DA] rounded p-2 text-xs text-[#1D1D1F]"
+                    >
+                      <option value="Health">Health</option>
+                      <option value="Career">Career</option>
+                      <option value="Finance">Finance</option>
+                      <option value="Learning">Learning</option>
+                      <option value="Personal">Personal</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-zinc-450 uppercase tracking-widest block">Logs target per day</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="10"
+                    value={targetPerDay}
+                    onChange={(e) => setTargetPerDay(Number(e.target.value))}
+                    className="w-full px-3 py-2 bg-[#F7F5F2] border border-[#E5E1DA] rounded text-xs text-[#1D1D1F]"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full mt-4 bg-[#5C7C5A] hover:bg-[#5C7C5A]/90 text-white font-medium py-2 px-4 rounded text-xs transition shadow-sm flex items-center justify-center gap-2"
+                >
+                  Confirm Diary Routine
+                </button>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* 3. PHYSICAL PLANS SUMMARY PANEL */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 font-sans">
         
-        <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800/80 p-5 rounded-2xl shadow-sm text-center">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Current Max Streak</span>
-          <div className="flex items-center justify-center gap-1.5 mt-1">
-            <Flame size={20} className="text-orange-500 fill-orange-500/10" />
-            <span className="text-2xl font-bold font-sans text-gray-900 dark:text-zinc-100">{totalCurrentStreak} <span className="text-xs text-gray-450 font-normal">days</span></span>
+        <div className="bg-white border border-[#E5E1DA] p-5 rounded-lg text-left">
+          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block leading-none">Weekly continuity</span>
+          <div className="flex items-baseline gap-2 mt-2">
+            <span className="text-3xl font-extrabold font-mono text-[#5C7C5A]">{overallCompletionPercentage}%</span>
+            <span className="text-xs text-zinc-450">Ticked parameters</span>
           </div>
+          <p className="text-[11px] text-zinc-405 font-serif italic mt-2.5">Summing completion counts across all weekly diary pages.</p>
         </div>
 
-        <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800/80 p-5 rounded-2xl shadow-sm text-center">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">All-Time Max Streak</span>
-          <div className="flex items-center justify-center gap-1.5 mt-1">
-            <Flame size={20} className="text-indigo-500" />
-            <span className="text-2xl font-bold font-sans text-gray-900 dark:text-zinc-100">{longestStreak} <span className="text-xs text-gray-450 font-normal">days</span></span>
+        <div className="bg-white border border-[#E5E1DA] p-5 rounded-lg text-left">
+          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block leading-none">Aggregate max streak</span>
+          <div className="flex items-baseline gap-2 mt-2 font-mono">
+            <span className="text-3xl font-extrabold text-[#C47A5A]">{longestStreak} days</span>
+            <span className="text-xs text-zinc-450">Peak continuity</span>
           </div>
+          <p className="text-[11px] text-zinc-405 font-serif italic mt-2.5">Your record continuous execution of focus variables.</p>
         </div>
 
-        <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800/80 p-5 rounded-2xl shadow-sm text-center">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Weekly Consistency</span>
-          <div className="flex items-center justify-center mt-1">
-            <span className="text-2xl font-bold text-gray-900 dark:text-zinc-100">{overallCompletionPercentage}%</span>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800/80 p-5 rounded-2xl shadow-sm text-center">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Most Consistent</span>
-          <div className="flex items-center justify-center mt-1">
-            <span className="text-sm font-bold font-sans text-teal-600 dark:text-teal-400 max-w-[150px] truncate">
-              {mostSuccessfulHabit ? mostSuccessfulHabit.name : 'N/A'}
+        <div className="bg-white border border-[#E5E1DA] p-5 rounded-lg text-left">
+          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block leading-none font-sans">Best Routine streak</span>
+          <div className="flex items-baseline gap-2 mt-2">
+            <span className="text-xs font-bold text-[#1D1D1F] truncate max-w-[130px]">
+              {mostSuccessfulHabit ? mostSuccessfulHabit.name : 'None listed'}
             </span>
+            <span className="text-xs text-zinc-450 font-mono">({totalCurrentStreak}d streak)</span>
           </div>
+          <p className="text-[11px] text-zinc-405 font-serif italic mt-2.5">Lead focus variable maintaining ideal alignment parameters.</p>
         </div>
 
       </div>
 
-      {/* CORE HEATMAP BLOCK VISUALIZATION (GitHub style) */}
-      <div id="habit_heatmap_card" className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 p-5 rounded-2xl shadow-sm space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
-          <h3 className="font-semibold text-gray-800 dark:text-zinc-200 flex items-center gap-2 text-sm">
-            <Grid size={16} className="text-sky-500" />
-            GitHub-Style Habit Heatmap
+      {/* 4. EXQUISITE CHRONOLOGICAL CALENDAR TICK MATRIX */}
+      <div className="bg-white border border-[#E5E1DA] rounded-lg">
+        
+        <div className="p-4 bg-[#F7F5F2]/45 border-b border-[#E5E1DA] flex justify-between items-center">
+          <h3 className="font-serif font-bold text-sm text-[#1D1D1F]">
+            Routine Weekly Matrix Ledger
           </h3>
-          <div className="flex items-center gap-4 text-[10px] font-mono text-gray-400">
-            <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 bg-gray-100 dark:bg-zinc-800 rounded" /> Less</span>
-            <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 bg-teal-500 rounded" /> More completions</span>
-          </div>
+          <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider">Trailing 7-Day ledger sheet</span>
         </div>
 
-        {/* Heatmap Grid map container (responsive scroll) */}
-        <div className="overflow-x-auto pb-2">
-          {habits.length === 0 ? (
-            <div className="text-center py-6 text-xs text-gray-400 font-mono">
-              Establish habits to compile heatmap grid cells.
-            </div>
-          ) : (
-            <div className="flex gap-1 min-w-[580px] justify-between">
-              {heatmapWeeks.map((week, weekIdx) => (
-                <div key={weekIdx} className="flex flex-col gap-1">
-                  {week.map((dateStr) => {
-                    // Check if any habit has checked on this exact dateStr
-                    let checkedHabitsOnDate = 0;
-                    habits.forEach((h) => {
-                      if (h.logs.some((l) => l.date === dateStr)) {
-                        checkedHabitsOnDate++;
-                      }
-                    });
-
-                    // Determine grade intensity level color
-                    let cellColor = 'bg-gray-100 dark:bg-zinc-800/80';
-                    if (checkedHabitsOnDate > 0) {
-                      if (checkedHabitsOnDate === 1) {
-                        cellColor = 'bg-teal-200 dark:bg-teal-900/40 text-white';
-                      } else if (checkedHabitsOnDate <= 2) {
-                        cellColor = 'bg-teal-400 dark:bg-teal-700';
-                      } else {
-                        cellColor = 'bg-teal-600 dark:bg-teal-500';
-                      }
-                    }
-
-                    const formattedDate = new Date(dateStr).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                    });
-
+        {habits.length === 0 ? (
+          <div className="py-16 text-center text-zinc-400 font-serif italic text-xs">
+            No routines logged. Initialize using the button above.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="border-b border-[#E5E1DA] bg-[#F7F5F2]/20 font-mono text-[10px] text-zinc-455">
+                  <th className="py-3 px-4 font-bold max-w-[180px] truncate uppercase tracking-widest">HABIT chapter</th>
+                  {past7DaysChronological.map((dateStr, idx) => {
+                    const dateObj = new Date(dateStr + 'T00:00:00');
+                    const dayLabel = dateObj.toLocaleDateString('en-US', { weekday: 'short' });
+                    const dayNum = dateObj.getDate();
+                    const isToday = dateStr === todayStr;
                     return (
-                      <div
-                        key={dateStr}
-                        className={`w-3.5 h-3.5 rounded transition-colors group cursor-pointer ${cellColor}`}
-                        title={`${formattedDate}: Completed ${checkedHabitsOnDate} habits`}
-                      />
+                      <th key={idx} className="py-2 px-2.5 text-center font-bold">
+                        <div className="flex flex-col items-center">
+                          <span className="text-[9px] uppercase font-mono">{dayLabel}</span>
+                          <span className={`text-[11px] px-1.5 rounded-sm mt-0.5 leading-tight font-bold ${isToday ? 'bg-[#5C7C5A] text-white' : 'text-zinc-605'}`}>
+                            {dayNum}
+                          </span>
+                        </div>
+                      </th>
                     );
                   })}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-        <p className="text-[10px] text-gray-400 font-sans leading-none">
-          * Heatmap traces completions over the previous 98 days chronologically. Hover blocks to check completions count.
-        </p>
-      </div>
-
-      {/* SPLIT SCREEN WIDGETS: Weekly Chart / Interactive check logger */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Weekly recharts graph completion indicator */}
-        <div id="habit_bar_chart_card" className="lg:col-span-1 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 p-5 rounded-2xl shadow-sm">
-          <h3 className="font-semibold text-gray-800 dark:text-zinc-200 flex items-center gap-2 mb-4 text-sm">
-            <BarChart size={16} className="text-teal-500" />
-            7-Day Completion Volume
-          </h3>
-          <div className="w-full h-48">
-            <ResponsiveContainer width="105%" height="100%">
-              <RechartsBarChart data={weeklyCompletionData} margin={{ top: 5, right: 10, left: -40, bottom: 0 }}>
-                <XAxis dataKey="day" stroke="#94a3b8" fontSize={11} tickLine={false} />
-                <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} allowDecimals={false} />
-                <Tooltip />
-                <Bar dataKey="completed" fill="#14b8a6" radius={[4, 4, 0, 0]} />
-              </RechartsBarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Dynamic Interactive List */}
-        <div id="habits_list_container" className="lg:col-span-2 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 p-5 rounded-2xl shadow-sm space-y-4">
-          <h3 className="font-semibold text-gray-800 dark:text-zinc-200 flex items-center gap-2 text-sm">
-            <CheckCircle size={16} className="text-indigo-500" />
-            Track Habits Progress
-          </h3>
-
-          {habits.length === 0 ? (
-            <div className="text-center py-6 text-gray-400 dark:text-zinc-500 text-xs font-mono">
-              No habits cataloged. Establish habits using the "Track New Habit" button.
-            </div>
-          ) : (
-            <div className="space-y-4 max-h-[300px] overflow-y-auto pr-1">
-              {habits.map((h) => {
-                const logsToday = h.logs.some((l) => l.date === todayStr);
-
-                // Compile previous 5 days check boxes for micro logging
-                const pastDatesRow = Array.from({ length: 6 }, (_, idx) => {
-                  return getPastDateStr(5 - idx);
-                });
-
-                return (
-                  <div
-                    key={h.id}
-                    className="p-3.5 bg-gray-50 dark:bg-zinc-950 border border-gray-100 dark:border-zinc-800 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-                  >
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[9px] font-bold text-sky-600 bg-sky-50 dark:bg-sky-950/20 border border-sky-100 dark:border-sky-900 px-1.5 py-0.5 rounded font-mono">
-                          {h.category}
+                  <th className="py-3 px-4 text-center font-bold uppercase tracking-widest text-[9px]">Streak</th>
+                  <th className="py-3 px-4 text-center font-bold uppercase tracking-widest text-[9px]">Tools</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#E5E1DA]/60">
+                {habits.map((habit) => (
+                  <tr key={habit.id} className="hover:bg-[#F7F5F2]/30 transition-colors">
+                    
+                    {/* Prefix name and category */}
+                    <td className="py-3.5 px-4 max-w-[180px] text-left">
+                      <div className="space-y-1">
+                        <span className="font-semibold text-[#1D1D1F] block text-sm leading-tight truncate">
+                          {habit.name}
                         </span>
-                        <span className="text-[10px] text-gray-400 font-mono">({h.frequency})</span>
-                      </div>
-                      <h4 className="font-semibold text-gray-800 dark:text-zinc-200 text-sm mt-1">
-                        {h.name}
-                      </h4>
-                      <p className="text-[11px] text-gray-400 max-w-[280px] mt-0.5 leading-relaxed truncate">
-                        {h.description}
-                      </p>
-                    </div>
-
-                    {/* Interactive Days Row & Controls */}
-                    <div className="flex items-center justify-between sm:justify-end gap-5">
-                      <div className="text-center space-y-1">
-                        <span className="text-[9px] uppercase tracking-wider text-gray-400 block font-bold">Past 6 Days Logs</span>
-                        <div className="flex gap-1.5">
-                          {pastDatesRow.map((day) => {
-                            const isLogged = h.logs.some((l) => l.date === day);
-                            const labelStr = new Date(day).toLocaleDateString('en-US', { weekday: 'narrow' });
-                            return (
-                              <button
-                                key={day}
-                                onClick={() => toggleHabitLog(h.id, day)}
-                                className={`w-5 h-5 rounded-md text-[10px] text-center font-bold font-mono transition-all border ${
-                                  isLogged
-                                    ? 'bg-teal-500 border-teal-500 text-white shadow-xs'
-                                    : 'border-gray-200 dark:border-zinc-800 hover:border-gray-300 hover:bg-gray-100/50 dark:hover:bg-zinc-900 text-gray-400'
-                                }`}
-                                title={`Toggle completed logs for ${day}`}
-                              >
-                                {labelStr}
-                              </button>
-                            );
-                          })}
+                        <div className="flex items-center gap-2">
+                          <span className="text-[9px] bg-[#5C7C5A]/10 text-[#5C7C5A] border border-[#5C7C5A]/15 font-mono px-1 py-0.2 rounded leading-none uppercase font-bold tracking-wide">
+                            {habit.category}
+                          </span>
+                          {habit.description && (
+                            <span className="text-[10px] text-zinc-400 truncate max-w-[120px] font-serif italic">
+                              {habit.description}
+                            </span>
+                          )}
                         </div>
                       </div>
+                    </td>
 
-                      {/* Delete controller */}
+                    {/* Check matrix days column ticks */}
+                    {past7DaysChronological.map((dateStr, idx) => {
+                      const completedOnDay = habit.logs.some(l => l.date === dateStr);
+                      return (
+                        <td key={idx} className="py-3 px-1 text-center">
+                          <button
+                            onClick={() => toggleHabitLog(habit.id, dateStr)}
+                            className={`w-6 h-6 mx-auto rounded-sm border flex items-center justify-center cursor-pointer transition-all ${
+                              completedOnDay
+                                ? 'bg-[#5C7C5A] border-[#5C7C5A] text-white shadow-xs'
+                                : 'border-[#E5E1DA] hover:border-[#5C7C5A] bg-white text-transparent hover:text-zinc-300'
+                            }`}
+                          >
+                            <Check size={13} strokeWidth={completedOnDay ? 3.5 : 1} />
+                          </button>
+                        </td>
+                      );
+                    })}
+
+                    {/* Streaks */}
+                    <td className="py-3 px-4 text-center">
+                      <div className="inline-flex items-center gap-1 font-mono text-xs font-semibold text-[#C47A5A] bg-[#C47A5A]/5 border border-[#C47A5A]/20 px-2 py-0.5 rounded">
+                        <Flame size={12} strokeWidth={2.5} />
+                        <span>{habit.streak}d</span>
+                      </div>
+                    </td>
+
+                    {/* Delete */}
+                    <td className="py-3 px-4 text-center">
                       <button
-                        onClick={() => deleteHabit(h.id)}
-                        className="text-gray-300 hover:text-rose-500 p-1 rounded-lg"
+                        onClick={() => deleteHabit(habit.id)}
+                        className="text-zinc-300 hover:text-rose-600 p-1 rounded transition-colors"
+                        title="Delete Routine"
                       >
-                        <Trash size={14} />
+                        <Trash size={12} />
                       </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
+                    </td>
+
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* 5. STATIONERY HEALTH NOTEBOX INSTRUCTION */}
+      <div className="p-4 bg-[#F7F5F2] border border-[#E5E1DA] rounded-lg text-left font-serif text-[12px] italic text-zinc-550 leading-relaxed max-w-2xl">
+        <span className="font-sans not-italic font-bold text-[9.5px] uppercase tracking-widest text-[#5C7C5A] block mb-1">Routines Handbook Note</span>
+        "Our digital planner logs are offline persistent arrays cached securely to local storage layers. Ensure log inputs are marked chronologically before midnight to maintain valid streak calculators across consecutive planner cycles."
       </div>
 
     </div>

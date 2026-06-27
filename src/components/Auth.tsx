@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { useAppState } from '../context/StateContext';
-import { KeyRound, Mail, Sparkles, User, LogIn, UserPlus } from 'lucide-react';
+import { KeyRound, Mail, User, LogIn, UserPlus, Leaf } from 'lucide-react';
 
 export default function Auth() {
   const { login } = useAppState();
   const [isSignUp, setIsSignUp] = useState(false);
-  const [email, setEmail] = useState('khushinayak96@gmail.com');
-  const [name, setName] = useState('Khushi Nayak');
-  const [password, setPassword] = useState('password123');
+  const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -17,131 +17,142 @@ export default function Auth() {
       return;
     }
     setError('');
-    // Handle signup/login
+    
     if (isSignUp) {
       login(email, name);
     } else {
-      // Allow any email for demo purposes, resolve default profile for khushinayak96@gmail.com
       const resolvedName = email.toLowerCase() === 'khushinayak96@gmail.com' ? 'Khushi Nayak' : email.split('@')[0];
       login(email, resolvedName);
     }
   };
 
   return (
-    <div id="auth_container" className="fixed inset-0 flex items-center justify-center bg-gray-50 dark:bg-zinc-950 p-4 transition-colors duration-300">
-      <div id="auth_glow_fx" className="absolute w-[500px] h-[500px] bg-sky-200/20 dark:bg-sky-900/10 rounded-full blur-3xl -z-10 pointer-events-none" />
-      <div id="auth_card" className="w-full max-w-md bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl shadow-gray-200/50 dark:shadow-none p-8 relative overflow-hidden">
+    <div id="auth_container" className="fixed inset-0 flex items-center justify-center bg-[#F7F5F2] p-4 font-sans select-none overflow-y-auto">
+      <div id="auth_card" className="w-full max-w-sm bg-white border border-[#E5E1DA] rounded-xl shadow-[0_4px_24px_rgba(29,29,31,0.02)] p-8 relative">
         
-        {/* Banner */}
-        <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-sky-400 via-indigo-500 to-sky-500" />
+        {/* Subtle bookmark ribbon aesthetic */}
+        <div className="absolute top-0 right-8 w-4 h-8 bg-[#C47A5A] rounded-b-sm opacity-90" />
 
         {/* Brand Header */}
-        <div className="flex flex-col items-center mb-8 text-center">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-sky-400 to-indigo-600 flex items-center justify-center text-white font-bold text-xl shadow-md mb-3">
-             L
+        <div className="flex flex-col items-center mb-8 text-center mt-3">
+          <div className="w-10 h-10 rounded-full bg-[#5C7C5A]/10 flex items-center justify-center text-[#5C7C5A] mb-3">
+             <Leaf size={18} />
           </div>
-          <h1 className="text-2xl font-bold font-sans tracking-tight text-gray-900 dark:text-gray-100">
-            Life<span className="text-sky-500">OS</span> Workspace
+          <h1 className="text-2xl font-serif font-bold tracking-tight text-[#1D1D1F]">
+            LifeOS Journal
           </h1>
-          <p className="text-sm text-gray-500 dark:text-zinc-400 mt-1.5">
-            {isSignUp ? 'Establish your personal operating system' : 'Sign in to your productivity engine'}
+          <p className="text-[12px] text-zinc-500 font-serif italic max-w-[240px] mt-1.5">
+            {isSignUp ? 'Open a new personal operating space' : 'Authenticate credentials to open daily ledger'}
           </p>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 text-left">
           {error && (
-            <div className="text-xs bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 p-3 rounded-lg border border-rose-100 dark:border-rose-900/40">
+            <div className="text-[11px] bg-rose-50 text-rose-700 p-3 rounded border border-rose-100 font-medium">
               {error}
             </div>
           )}
 
           {isSignUp && (
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-gray-600 dark:text-zinc-300 block">Full Name</label>
+              <label className="text-[10px] font-bold text-zinc-450 uppercase tracking-widest block">Full Name</label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                  <User size={16} />
+                <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-400">
+                  <User size={13} />
                 </span>
                 <input
                   type="text"
                   placeholder="Khushi Nayak"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm bg-gray-50 dark:bg-zinc-950 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-sky-500/40 focus:border-sky-500 transition-all font-sans"
+                  className="w-full pl-9 pr-4 py-2 border border-[#E5E1DA] rounded text-xs bg-[#F7F5F2]/40 text-[#1D1D1F] focus:bg-white focus:outline-none focus:border-[#5C7C5A] transition-all font-sans"
                 />
               </div>
             </div>
           )}
 
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-gray-600 dark:text-zinc-300 block">Email Address</label>
+            <label className="text-[10px] font-bold text-zinc-450 uppercase tracking-widest block">Email Address</label>
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                <Mail size={16} />
+              <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-400">
+                <Mail size={13} />
               </span>
               <input
                 type="email"
                 placeholder="khushinayak96@gmail.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm bg-gray-50 dark:bg-zinc-950 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-sky-500/40 focus:border-sky-500 transition-all font-sans"
+                className="w-full pl-9 pr-4 py-2 border border-[#E5E1DA] rounded text-xs bg-[#F7F5F2]/40 text-[#1D1D1F] focus:bg-white focus:outline-none focus:border-[#5C7C5A] transition-all font-sans"
               />
             </div>
           </div>
 
           <div className="space-y-1">
             <div className="flex justify-between items-center mb-1">
-              <label className="text-xs font-semibold text-gray-600 dark:text-zinc-300 block">Password</label>
+              <label className="text-[10px] font-bold text-zinc-450 uppercase tracking-widest block">Password</label>
               {!isSignUp && (
-                <a href="#" className="text-[10px] text-sky-500 hover:underline">
-                  Forgot?
-                </a>
+                <span className="text-[9px] font-mono text-zinc-400 select-none">
+                  Encrypted
+                </span>
               )}
             </div>
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                <KeyRound size={16} />
+              <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-400">
+                <KeyRound size={13} />
               </span>
               <input
                 type="password"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm bg-gray-50 dark:bg-zinc-950 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-sky-500/40 focus:border-sky-500 transition-all font-sans"
+                className="w-full pl-9 pr-4 py-2 border border-[#E5E1DA] rounded text-xs bg-[#F7F5F2]/40 text-[#1D1D1F] focus:bg-white focus:outline-none focus:border-[#5C7C5A] transition-all font-sans"
               />
             </div>
           </div>
 
           <button
             type="submit"
-            className="w-full mt-2 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white font-medium py-2 px-4 rounded-lg text-sm shadow-md shadow-indigo-200 dark:shadow-none hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full mt-3 bg-[#5C7C5A] hover:bg-[#5C7C5A]/95 text-white font-semibold py-2 px-4 rounded text-xs transition-colors shadow-sm flex items-center justify-center gap-2 cursor-pointer"
           >
-            {isSignUp ? <UserPlus size={16} /> : <LogIn size={16} />}
-            {isSignUp ? 'Establish OS Account' : 'Authenticate Credentials'}
+            {isSignUp ? <UserPlus size={13} /> : <LogIn size={13} />}
+            {isSignUp ? 'Establish OS Journal' : 'Authenticate Ledger Credentials'}
           </button>
         </form>
 
         {/* Demo Account Indicator */}
         {!isSignUp && (
-          <div className="mt-4 p-2.5 bg-gray-50 dark:bg-zinc-950 border border-gray-100 dark:border-zinc-800/80 rounded-lg text-center flex items-center justify-center gap-2">
-            <Sparkles size={12} className="text-sky-500 animate-pulse" />
-            <span className="text-[11px] text-gray-500 dark:text-zinc-400 font-mono">
-              Prepopulated Demo: <span className="text-sky-500 font-semibold">khushinayak96@gmail.com</span>
-            </span>
+          <div className="mt-4 p-2 bg-[#ECE7DC]/50 border border-[#B5AC9E] rounded text-center flex flex-col items-center justify-center gap-1 sm:gap-1.5 select-none z-10 relative">
+            <div className="flex items-center gap-1.5 justify-center">
+              <Leaf size={11} className="text-[#3B5F3E]" />
+              <span className="text-[10px] text-zinc-600 font-mono">
+                Click here to load the sample demo:
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setEmail('khushinayak96@gmail.com');
+                setName('Khushi Nayak');
+                setPassword('password123');
+              }}
+              className="text-[10.5px] text-[#3B5F3E] hover:underline font-bold font-mono cursor-pointer"
+            >
+              khushinayak96@gmail.com
+            </button>
           </div>
         )}
 
         {/* Footer Toggle */}
-        <div className="mt-6 pt-4 border-t border-gray-100 dark:border-zinc-800/80 text-center">
+        <div className="mt-6 pt-4 border-t border-[#E5E1DA]/50 text-center">
           <button
             onClick={() => {
               setIsSignUp(!isSignUp);
               setError('');
             }}
-            className="text-xs text-gray-500 dark:text-zinc-400 hover:text-sky-500 hover:underline cursor-pointer"
+            className="text-[11px] text-zinc-500 hover:text-[#5C7C5A] hover:underline cursor-pointer"
           >
-            {isSignUp ? 'Already configured? Log in here' : 'New user? Establish OS account'}
+            {isSignUp ? 'Already configured? Log in here' : 'New user? Establish OS count'}
           </button>
         </div>
       </div>

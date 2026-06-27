@@ -1,12 +1,132 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,750;1,400&family=JetBrains+Mono:wght@450;500;600&display=swap');
 @import "tailwindcss";
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Playfair Display", Georgia, serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 }
 
-/* Custom scrollbars */
+/* 
+  =========================================
+  IMMERSIVE FOREST / WOODLAND JOURNAL THEME
+  =========================================
+*/
+
+body {
+  background: radial-gradient(circle at 50% 50%, #BACFB5 0%, #859D7F 60%, #5E7557 100%) !important;
+  background-attachment: fixed !important;
+  color: #1F2A22 !important; /* Premium deep spruce forest black-green */
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Global Container Override */
+.min-h-screen {
+  background: radial-gradient(circle at 50% 50%, #BACFB5 0%, #859D7F 60%, #5E7557 100%) !important;
+  background-attachment: fixed !important;
+}
+
+/* High-Grade Stationery Linen/Wood-Pulp Cream Paper Sheets (Replaces stark white) */
+.bg-white, 
+[class*="bg-white"], 
+.bg-white\/10 {
+  background-color: #FAF6EB !important; /* Rich golden-ivory cream wood-linen paper */
+}
+
+/* Spot Input and Secondary Elements (Replaces stark light gray) */
+.bg-\[\#F7F5F2\],
+[class*="bg-[#F7F5F2]"],
+.bg-\[\#F7F5F2\]\/40,
+.bg-\[\#F7F5F2\]\/45,
+.bg-\[\#F7F5F2\]\/50 {
+  background-color: #ECE3CF !important; /* Warm, rich birch-bark / ginger sage-beige */
+}
+
+/* Hover effects */
+.hover\:bg-\[\#F7F5F2\]:hover,
+.hover\:bg-\[\#F7F5F2\]\/10:hover,
+.hover\:bg-\[\#F7F5F2\]\/20:hover,
+.hover\:bg-\[\#F7F5F2\]\/30:hover {
+  background-color: #E2D6BB !important;
+}
+
+/* Primary text to spruce cedar black */
+.text-\[\#1D1D1F\],
+[class*="text-[#1D1D1F]"] {
+  color: #1F2A22 !important; /* Spruce black */
+}
+
+/* Woodland Soil/Bark Textured Dividers and Borders (Replaces dry grey) */
+.border-\[\#E5E1DA\],
+.border-\[\#E5E1DA\]\/50,
+.border-\[\#E5E1DA\]\/60,
+.border-\[\#E5E1DA\]\/75,
+.border,
+[class*="border-[#E5E1DA]"] {
+  border-color: #B5AC9E !important; /* Soft woodland soil-pine bark */
+}
+
+/* Accent Adjustments: Make green buttons richer and brown clay highlight more distinct */
+.bg-\[\#5C7C5A\] {
+  background-color: #3B5F3E !important; /* Richer, deeper fern/moss forest green */
+}
+.hover\:bg-\[\#5C7C5A\]\/95:hover,
+.hover\:bg-\[\#5C7C5A\]\/90:hover {
+  background-color: #2F4D32 !important;
+}
+.text-\[\#5C7C5A\], [class*="text-[#5C7C5A]"] {
+  color: #3B5F3E !important; /* Deeper fern green for superb contrast on cream pulp */
+}
+.border-\[\#5C7C5A\]\/30 {
+  border-color: rgba(59, 95, 62, 0.4) !important;
+}
+.bg-\[\#5C7C5A\]\/5 {
+  background-color: rgba(59, 95, 62, 0.08) !important;
+}
+.bg-\[\#5C7C5A\]\/10 {
+  background-color: rgba(59, 95, 62, 0.12) !important;
+}
+
+/* Warm terracotta/clay accents -> organic pinebark-soil/clay brown */
+.text-\[\#C47A5A\], [class*="text-[#C47A5A]"] {
+  color: #8C5338 !important; /* Rich cedar pinecone brown */
+}
+.border-\[\#C47A5A\]\/30 {
+  border-color: rgba(140, 83, 56, 0.3) !important;
+}
+.bg-\[\#C47A5A\]\/10 {
+  background-color: rgba(140, 83, 56, 0.1) !important;
+}
+.bg-\[\#C47A5A\] {
+  background-color: #8C5338 !important; /* pinecone brown */
+}
+
+/* Custom Interactive Settings: Buttons, Selects, Inputs */
+input, textarea, select {
+  outline: none;
+  background-color: #ECE7DC !important;
+  border-color: #B5AC9E !important;
+  color: #1F2A22 !important;
+}
+input:focus, textarea:focus, select:focus {
+  background-color: #FAF8F2 !important;
+  border-color: #3B5F3E !important;
+}
+
+/* Recharts Tooltip custom matching */
+.recharts-tooltip-wrapper .bg-white {
+  background-color: #FAF8F2 !important;
+  border: 1px solid #B5AC9E !important;
+  color: #1F2A22 !important;
+}
+
+/* Modal Dim Backdrops */
+#raycast_modal_dim {
+  background-color: rgba(30, 42, 34, 0.5) !important; /* Dark pine canopy shadow */
+}
+
+/* Custom scrollbars matching premium woodland notebook pages */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -15,20 +135,26 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 999px;
+  background: #B5AC9E;
+  border-radius: 4px;
 }
-.dark ::-webkit-scrollbar-thumb {
-  background: #3f3f46;
+::-webkit-scrollbar-thumb:hover {
+  background: #3B5F3E;
 }
 
-/* Animations */
+/* Cozy selection style */
+::selection {
+  background-color: rgba(59, 95, 62, 0.18);
+  color: #1F2A22;
+}
+
+/* Fade animations */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(6px); }
+  from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: fadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
